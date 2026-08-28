@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RevMax - Slot Floor Yield Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FAFAF9;
+    --panel: #FFFFFF;
+    --fg: #1C1C1A;
+    --muted: #6B6B66;
+    --faint: #9A9A94;
+    --border: #E7E5E4;
+    --track: #EAE8E6;
+    --accent: #2F6FEC;
+    --accent-soft: #2F6FEC22;
+    --radius: 14px;
+    --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    color-scheme: light dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E0E0D;
+      --panel: #161615;
+      --fg: #F2F1EE;
+      --muted: #9C9A94;
+      --faint: #6E6C66;
+      --border: #262523;
+      --track: #262523;
+      --accent: #5B8DEF;
+      --accent-soft: #5B8DEF2A;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 40px 20px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(28px, 5vw, 44px);
+  }
+
+  /* ---- brand row ---- */
+  .brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    opacity: 0;
+    animation: rise 0.7s var(--ease-out) 0.05s forwards;
+  }
+  .brand-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .brand-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .brand-tag {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ---- hero ---- */
+  .hero {
+    text-align: center;
+    opacity: 0;
+    animation: rise 0.8s var(--ease-out) 0.14s forwards;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .figure {
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 0.94;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure .sign {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: var(--faint);
+    font-weight: 600;
+    margin-top: 0.35em;
+    margin-right: 0.04em;
+  }
+  .figure .amount {
+    font-size: clamp(3.4rem, 13vw, 7.4rem);
+  }
+  .hero-caption {
+    margin-top: 18px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .hero-caption b {
+    color: var(--fg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- panel of controls ---- */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(20px, 4vw, 28px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    animation: rise 0.8s var(--ease-out) 0.22s forwards;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 9px; }
+
+  .field-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .field-label .val {
+    color: var(--fg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 13px;
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6B66' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 38px;
+    cursor: pointer;
+  }
+  input[type="number"] { font-variant-numeric: tabular-nums; }
+  select:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 440px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ---- slider ---- */
+  .slider-field .field-label .val {
+    color: var(--accent);
+    font-size: 15px;
+  }
+  .lift-edit {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    color: var(--accent);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: text;
+  }
+  .lift-input {
+    width: 4ch;
+    text-align: right;
+    font: inherit;
+    color: var(--accent);
+    background: transparent;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+    font-variant-numeric: tabular-nums;
+    caret-color: var(--accent);
+  }
+  .lift-input:focus,
+  .lift-input:focus-visible {
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--accent);
+  }
+  .lift-input::-webkit-inner-spin-button,
+  .lift-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--track);
+    outline: none;
+    cursor: pointer;
+    margin: 6px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--panel);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-out);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--panel);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  }
+  input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 8px var(--accent-soft);
+  }
+  .ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 2px;
+  }
+
+  /* ---- disclaimer ---- */
+  .disclaimer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    opacity: 0;
+    animation: rise 0.8s var(--ease-out) 0.3s forwards;
+  }
+  .disclaimer .badge {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 13px;
+  }
+  .disclaimer .badge::before {
+    content: "";
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--faint);
+  }
+  .disclaimer p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--faint);
+    max-width: 490px;
+    margin: 0 auto;
+  }
+  .disclaimer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .brand, .hero, .panel, .disclaimer { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+
+    <div class="brand">
+      <div class="brand-name"><span class="brand-dot"></span>RevMax</div>
+      <div class="brand-tag">Slot floor yield model</div>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow">Incremental annual revenue</div>
+      <div class="figure">
+        <span class="sign">$</span><span class="amount" id="amount">0</span>
+      </div>
+      <div class="hero-caption">
+        <b id="cap-units">800</b> units at <b id="cap-wpud">$172</b>/day,
+        lifted <b id="cap-lift">3.0%</b>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="field">
+        <label class="field-label" for="market">
+          Nevada market <span class="val" id="market-val">$172 / unit / day</span>
+        </label>
+        <select id="market"></select>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label class="field-label" for="units">Number of units</label>
+          <input type="number" id="units" value="800" min="1" max="20000" step="1" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="wpud">
+            Win / unit / day <span class="val" id="wpud-note">market</span>
+          </label>
+          <input type="number" id="wpud" value="172" min="1" max="2000" step="1" />
+        </div>
+      </div>
+
+      <div class="field slider-field">
+        <label class="field-label" for="lift">
+          Yield lift
+          <span class="lift-edit">
+            <input type="number" id="lift-val" class="lift-input" value="3.0" min="0" max="15" step="0.1" inputmode="decimal" aria-label="Yield lift percent" />
+            <span class="pct">%</span>
+          </span>
+        </label>
+        <input type="range" id="lift" min="0" max="15" step="0.1" value="3" />
+        <div class="ticks"><span>0%</span><span>5%</span><span>10%</span><span>15%</span></div>
+      </div>
+    </section>
+
+    <footer class="disclaimer">
+      <span class="badge">Market-level model. Public data only.</span>
+      <p>
+        The yield-lift percentage is a scenario you choose, not a proven result for any
+        manufacturer or property. Baselines are derived from the
+        <a href="https://www.gaming.nv.gov/about-us/gaming-revenue-information-gri/" target="_blank" rel="noopener">Nevada Gaming Control Board</a>
+        <span id="data-period">Gaming Revenue Report (12-mo avg ending Jul 2026)</span>. They cover
+        state-licensed nonrestricted casinos only; they exclude restricted bar and route slots, and are not tribal-inclusive.
+      </p>
+    </footer>
+
+  </main>
+
+<script>
+  // Baselines derived from NGCB Gaming Revenue Report TL051, 12-mo avg (Aug 2025-Jul 2026),
+  // as win / avg-units / 365. Independently verified against the report PDF, Slot Machines - Total row.
+  // Nevada state-licensed nonrestricted casinos only. Values = win/unit/day (USD).
+  const MARKETS = [
+    { market: "Boulder Strip (locals)", winPerUnitPerDay: 172, group: "Las Vegas locals" },
+    { market: "Balance of Clark County (locals)", winPerUnitPerDay: 237, group: "Las Vegas locals" },
+    { market: "North Las Vegas", winPerUnitPerDay: 189, group: "Las Vegas locals" },
+    { market: "Downtown Las Vegas", winPerUnitPerDay: 174, group: "Las Vegas locals" },
+    { market: "Reno (Washoe)", winPerUnitPerDay: 208, group: "Northern Nevada" },
+    { market: "Sparks (Washoe)", winPerUnitPerDay: 122, group: "Northern Nevada" },
+    { market: "Washoe County (total)", winPerUnitPerDay: 172, group: "Northern Nevada" },
+    { market: "Laughlin", winPerUnitPerDay: 216, group: "Regional / drive-in" },
+    { market: "Mesquite", winPerUnitPerDay: 181, group: "Regional / drive-in" },
+    { market: "Las Vegas Strip", winPerUnitPerDay: 393, group: "Tourist / blended" },
+    { market: "Clark County (total)", winPerUnitPerDay: 275, group: "Tourist / blended" },
+    { market: "Nevada statewide", winPerUnitPerDay: 238, group: "Tourist / blended" },
+  ];
+  const DEFAULT_MARKET = 0; // Boulder Strip locals - conservative, matches AGS's regional customer profile
+
+  const $ = (id) => document.getElementById(id);
+  const marketSel = $('market');
+  const unitsEl = $('units');
+  const wpudEl = $('wpud');
+  const liftEl = $('lift');
+  const liftValEl = $('lift-val');
+
+  const groups = {};
+  MARKETS.forEach((m, i) => { (groups[m.group] ||= []).push({ m, i }); });
+  Object.entries(groups).forEach(([name, items]) => {
+    const og = document.createElement('optgroup');
+    og.label = name;
+    items.forEach(({ m, i }) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = m.market + '  ·  $' + m.winPerUnitPerDay + '/day';
+      og.appendChild(o);
+    });
+    marketSel.appendChild(og);
+  });
+  marketSel.value = DEFAULT_MARKET;
+
+  function currentValue() {
+    const units = Math.max(0, parseFloat(unitsEl.value) || 0);
+    const wpud = Math.max(0, parseFloat(wpudEl.value) || 0);
+    const lift = Math.max(0, parseFloat(liftEl.value) || 0) / 100;
+    return units * wpud * 365 * lift;
+  }
+
+  let rafId = null;
+  function animateTo(target) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      $('amount').textContent = Math.round(target).toLocaleString('en-US');
+      return;
+    }
+    cancelAnimationFrame(rafId);
+    const start = parseFloat($('amount').textContent.replace(/,/g, '')) || 0;
+    const dur = 700, t0 = performance.now();
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const v = start + (target - start) * ease(p);
+      $('amount').textContent = Math.round(v).toLocaleString('en-US');
+      if (p < 1) rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  function setAmountLive(target) {
+    cancelAnimationFrame(rafId);
+    $('amount').textContent = Math.round(target).toLocaleString('en-US');
+  }
+
+  function paintSlider() {
+    const pct = (liftEl.value - liftEl.min) / (liftEl.max - liftEl.min) * 100;
+    liftEl.style.background =
+      `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--track) ${pct}%, var(--track) 100%)`;
+  }
+
+  function syncCaption() {
+    const units = Math.round(parseFloat(unitsEl.value) || 0);
+    const wpud = Math.round(parseFloat(wpudEl.value) || 0);
+    const lift = parseFloat(liftEl.value) || 0;
+    $('cap-units').textContent = units.toLocaleString('en-US');
+    $('cap-wpud').textContent = '$' + wpud;
+    $('cap-lift').textContent = lift.toFixed(1) + '%';
+    $('market-val').textContent = '$' + MARKETS[marketSel.value].winPerUnitPerDay + ' / unit / day';
+  }
+
+  const liftMin = parseFloat(liftEl.min), liftMax = parseFloat(liftEl.max);
+  const clampLift = (v) => Math.min(liftMax, Math.max(liftMin, v));
+
+  liftEl.addEventListener('input', () => {
+    liftValEl.value = parseFloat(liftEl.value).toFixed(1);
+    paintSlider(); syncCaption(); setAmountLive(currentValue());
+  });
+  liftValEl.addEventListener('input', () => {
+    let v = parseFloat(liftValEl.value);
+    if (isNaN(v)) v = 0;
+    liftEl.value = clampLift(v);
+    paintSlider(); syncCaption(); setAmountLive(currentValue());
+  });
+  liftValEl.addEventListener('blur', () => {
+    let v = parseFloat(liftValEl.value);
+    if (isNaN(v)) v = 0;
+    v = clampLift(v);
+    liftEl.value = v;
+    liftValEl.value = v.toFixed(1);
+    paintSlider(); syncCaption(); setAmountLive(currentValue());
+  });
+  unitsEl.addEventListener('input', () => { syncCaption(); setAmountLive(currentValue()); });
+  wpudEl.addEventListener('input', () => {
+    $('wpud-note').textContent = 'custom';
+    syncCaption(); setAmountLive(currentValue());
+  });
+  marketSel.addEventListener('change', () => {
+    wpudEl.value = MARKETS[marketSel.value].winPerUnitPerDay;
+    $('wpud-note').textContent = 'market';
+    syncCaption(); paintSlider(); animateTo(currentValue());
+  });
+
+  // init
+  wpudEl.value = MARKETS[DEFAULT_MARKET].winPerUnitPerDay;
+  syncCaption();
+  paintSlider();
+  window.addEventListener('load', () => animateTo(currentValue()));
+</script>
+</body>
+</html>
