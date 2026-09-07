@@ -4,6 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RevMax - Slot Floor Yield Model</title>
+<meta name="description" content="800 units at $172/day, lifted 3.0% = $1,506,720 floor incremental revenue, and $301,344 to AGS at a 20% participation share." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://revmax-sigma.vercel.app" />
+<meta property="og:title" content="RevMax - Slot Floor Yield Model" />
+<meta property="og:description" content="800 units at $172/day, lifted 3.0% = $1,506,720 floor incremental revenue, and $301,344 to AGS at a 20% participation share." />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="RevMax - Slot Floor Yield Model" />
+<meta name="twitter:description" content="Incremental floor revenue and the supplier's participation share, on public Nevada market data." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -61,7 +69,7 @@
     max-width: 640px;
     display: flex;
     flex-direction: column;
-    gap: clamp(28px, 5vw, 44px);
+    gap: clamp(24px, 4.5vw, 40px);
   }
 
   /* ---- brand row ---- */
@@ -123,7 +131,7 @@
     margin-right: 0.04em;
   }
   .figure .amount {
-    font-size: clamp(3.4rem, 13vw, 7.4rem);
+    font-size: clamp(3.2rem, 12vw, 7rem);
   }
   .hero-caption {
     margin-top: 18px;
@@ -133,6 +141,12 @@
   .hero-caption b {
     color: var(--fg);
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-sub {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--faint);
     font-variant-numeric: tabular-nums;
   }
 
@@ -203,11 +217,7 @@
   }
   @media (max-width: 440px) { .two-col { grid-template-columns: 1fr; } }
 
-  /* ---- slider ---- */
-  .slider-field .field-label .val {
-    color: var(--accent);
-    font-size: 15px;
-  }
+  /* ---- sliders ---- */
   .lift-edit {
     display: inline-flex;
     align-items: baseline;
@@ -244,6 +254,7 @@
   }
   .lift-input::-webkit-inner-spin-button,
   .lift-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
@@ -289,7 +300,7 @@
   .disclaimer {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     text-align: center;
     opacity: 0;
     animation: rise 0.8s var(--ease-out) 0.3s forwards;
@@ -315,10 +326,17 @@
     font-size: 12px;
     line-height: 1.5;
     color: var(--faint);
-    max-width: 490px;
+    max-width: 500px;
     margin: 0 auto;
   }
   .disclaimer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+  .disclaimer .attribution {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+  }
 
   @keyframes rise {
     from { opacity: 0; transform: translateY(10px); }
@@ -340,14 +358,15 @@
     </div>
 
     <section class="hero">
-      <div class="eyebrow">Incremental annual revenue</div>
+      <div class="eyebrow">AGS incremental annual revenue</div>
       <div class="figure">
-        <span class="sign">$</span><span class="amount" id="amount">0</span>
+        <span class="sign">$</span><span class="amount" id="amount">301,344</span>
       </div>
       <div class="hero-caption">
-        <b id="cap-units">800</b> units at <b id="cap-wpud">$172</b>/day,
-        lifted <b id="cap-lift">3.0%</b>
+        <b id="cap-part">20%</b> participation share of
+        <b id="cap-floor">$1,506,720</b> floor incremental revenue
       </div>
+      <div class="hero-sub" id="cap-detail">800 units at $172/day, lifted 3.0%</div>
     </section>
 
     <section class="panel">
@@ -375,24 +394,38 @@
         <label class="field-label" for="lift">
           Yield lift
           <span class="lift-edit">
-            <input type="number" id="lift-val" class="lift-input" value="3.0" min="0" max="15" step="0.1" inputmode="decimal" aria-label="Yield lift percent" />
+            <input type="number" id="lift-val" class="lift-input" value="3.0" min="0" max="10" step="0.1" inputmode="decimal" aria-label="Yield lift percent" />
             <span class="pct">%</span>
           </span>
         </label>
-        <input type="range" id="lift" min="0" max="15" step="0.1" value="3" />
-        <div class="ticks"><span>0%</span><span>5%</span><span>10%</span><span>15%</span></div>
+        <input type="range" id="lift" min="0" max="10" step="0.1" value="3" />
+        <div class="ticks"><span>0%</span><span>5%</span><span>10%</span></div>
+      </div>
+
+      <div class="field slider-field">
+        <label class="field-label" for="part">
+          Participation share
+          <span class="lift-edit">
+            <input type="number" id="part-val" class="lift-input" value="20" min="0" max="100" step="1" inputmode="numeric" aria-label="Participation share percent" />
+            <span class="pct">%</span>
+          </span>
+        </label>
+        <input type="range" id="part" min="0" max="100" step="1" value="20" />
+        <div class="ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
       </div>
     </section>
 
     <footer class="disclaimer">
       <span class="badge">Market-level model. Public data only.</span>
       <p>
-        The yield-lift percentage is a scenario you choose, not a proven result for any
-        manufacturer or property. Baselines are derived from the
+        The yield-lift percentage and participation share are scenarios you choose, not proven results for any
+        manufacturer or property. Participation share reflects typical revenue-share and lease arrangements between
+        suppliers and operators; it is not a claim about any specific AGS contract. Baselines are derived from the
         <a href="https://www.gaming.nv.gov/about-us/gaming-revenue-information-gri/" target="_blank" rel="noopener">Nevada Gaming Control Board</a>
-        <span id="data-period">Gaming Revenue Report (12-mo avg ending Jul 2026)</span>. They cover
-        state-licensed nonrestricted casinos only; they exclude restricted bar and route slots, and are not tribal-inclusive.
+        Gaming Revenue Report (12-mo avg ending Jul 2026). They cover state-licensed nonrestricted casinos only;
+        they exclude restricted bar and route slots, and are not tribal-inclusive.
       </p>
+      <p class="attribution">Prepared by The Bolt Group LLC</p>
     </footer>
 
   </main>
@@ -423,6 +456,8 @@
   const wpudEl = $('wpud');
   const liftEl = $('lift');
   const liftValEl = $('lift-val');
+  const partEl = $('part');
+  const partValEl = $('part-val');
 
   const groups = {};
   MARKETS.forEach((m, i) => { (groups[m.group] ||= []).push({ m, i }); });
@@ -439,12 +474,9 @@
   });
   marketSel.value = DEFAULT_MARKET;
 
-  function currentValue() {
-    const units = Math.max(0, parseFloat(unitsEl.value) || 0);
-    const wpud = Math.max(0, parseFloat(wpudEl.value) || 0);
-    const lift = Math.max(0, parseFloat(liftEl.value) || 0) / 100;
-    return units * wpud * 365 * lift;
-  }
+  const num = (el) => Math.max(0, parseFloat(el.value) || 0);
+  const floorValue = () => num(unitsEl) * num(wpudEl) * 365 * (num(liftEl) / 100);
+  const agsValue = () => floorValue() * (num(partEl) / 100);
 
   let rafId = null;
   function animateTo(target) {
@@ -470,59 +502,77 @@
     $('amount').textContent = Math.round(target).toLocaleString('en-US');
   }
 
-  function paintSlider() {
-    const pct = (liftEl.value - liftEl.min) / (liftEl.max - liftEl.min) * 100;
-    liftEl.style.background =
+  function paint(el) {
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.background =
       `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--track) ${pct}%, var(--track) 100%)`;
   }
 
   function syncCaption() {
-    const units = Math.round(parseFloat(unitsEl.value) || 0);
-    const wpud = Math.round(parseFloat(wpudEl.value) || 0);
-    const lift = parseFloat(liftEl.value) || 0;
-    $('cap-units').textContent = units.toLocaleString('en-US');
-    $('cap-wpud').textContent = '$' + wpud;
-    $('cap-lift').textContent = lift.toFixed(1) + '%';
+    const units = Math.round(num(unitsEl));
+    const wpud = Math.round(num(wpudEl));
+    const lift = num(liftEl);
+    const part = Math.round(num(partEl));
+    $('cap-detail').textContent = units.toLocaleString('en-US') + ' units at $' + wpud + '/day, lifted ' + lift.toFixed(1) + '%';
+    $('cap-part').textContent = part + '%';
+    $('cap-floor').textContent = '$' + Math.round(floorValue()).toLocaleString('en-US');
     $('market-val').textContent = '$' + MARKETS[marketSel.value].winPerUnitPerDay + ' / unit / day';
   }
 
-  const liftMin = parseFloat(liftEl.min), liftMax = parseFloat(liftEl.max);
-  const clampLift = (v) => Math.min(liftMax, Math.max(liftMin, v));
+  const clampTo = (el, v) => Math.min(parseFloat(el.max), Math.max(parseFloat(el.min), v));
 
+  // yield lift
   liftEl.addEventListener('input', () => {
     liftValEl.value = parseFloat(liftEl.value).toFixed(1);
-    paintSlider(); syncCaption(); setAmountLive(currentValue());
+    paint(liftEl); syncCaption(); setAmountLive(agsValue());
   });
   liftValEl.addEventListener('input', () => {
-    let v = parseFloat(liftValEl.value);
-    if (isNaN(v)) v = 0;
-    liftEl.value = clampLift(v);
-    paintSlider(); syncCaption(); setAmountLive(currentValue());
+    let v = parseFloat(liftValEl.value); if (isNaN(v)) v = 0;
+    liftEl.value = clampTo(liftEl, v);
+    paint(liftEl); syncCaption(); setAmountLive(agsValue());
   });
   liftValEl.addEventListener('blur', () => {
-    let v = parseFloat(liftValEl.value);
-    if (isNaN(v)) v = 0;
-    v = clampLift(v);
-    liftEl.value = v;
-    liftValEl.value = v.toFixed(1);
-    paintSlider(); syncCaption(); setAmountLive(currentValue());
+    let v = parseFloat(liftValEl.value); if (isNaN(v)) v = 0;
+    v = clampTo(liftEl, v); liftEl.value = v; liftValEl.value = v.toFixed(1);
+    paint(liftEl); syncCaption(); setAmountLive(agsValue());
   });
-  unitsEl.addEventListener('input', () => { syncCaption(); setAmountLive(currentValue()); });
+
+  // participation share
+  partEl.addEventListener('input', () => {
+    partValEl.value = String(Math.round(parseFloat(partEl.value)));
+    paint(partEl); syncCaption(); setAmountLive(agsValue());
+  });
+  partValEl.addEventListener('input', () => {
+    let v = parseFloat(partValEl.value); if (isNaN(v)) v = 0;
+    partEl.value = clampTo(partEl, v);
+    paint(partEl); syncCaption(); setAmountLive(agsValue());
+  });
+  partValEl.addEventListener('blur', () => {
+    let v = parseFloat(partValEl.value); if (isNaN(v)) v = 0;
+    v = clampTo(partEl, v); partEl.value = v; partValEl.value = String(Math.round(v));
+    paint(partEl); syncCaption(); setAmountLive(agsValue());
+  });
+
+  // units / wpud
+  unitsEl.addEventListener('input', () => { syncCaption(); setAmountLive(agsValue()); });
   wpudEl.addEventListener('input', () => {
     $('wpud-note').textContent = 'custom';
-    syncCaption(); setAmountLive(currentValue());
+    syncCaption(); setAmountLive(agsValue());
   });
+
+  // market
   marketSel.addEventListener('change', () => {
     wpudEl.value = MARKETS[marketSel.value].winPerUnitPerDay;
     $('wpud-note').textContent = 'market';
-    syncCaption(); paintSlider(); animateTo(currentValue());
+    syncCaption(); animateTo(agsValue());
   });
 
   // init
   wpudEl.value = MARKETS[DEFAULT_MARKET].winPerUnitPerDay;
   syncCaption();
-  paintSlider();
-  window.addEventListener('load', () => animateTo(currentValue()));
+  paint(liftEl);
+  paint(partEl);
+  window.addEventListener('load', () => animateTo(agsValue()));
 </script>
 </body>
 </html>
